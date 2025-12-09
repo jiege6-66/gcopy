@@ -71,12 +71,12 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         working-directory: desktop/src-tauri/icons
         run: |
-          # Create a square icon by centering the original on a 256x256 canvas
-          convert icon.png -background transparent -gravity center -extent 256x256 icon_square.png
-          # Generate required sizes
-          convert icon_square.png -resize 32x32 32x32.png
-          convert icon_square.png -resize 128x128 128x128.png
-          convert icon_square.png -resize 256x256 128x128@2x.png
+          # Create a square icon by centering the original on a 256x256 canvas (force RGBA)
+          convert icon.png -background none -gravity center -extent 256x256 PNG32:icon_square.png
+          # Generate required sizes (force RGBA with PNG32 prefix)
+          convert icon_square.png -resize 32x32 PNG32:32x32.png
+          convert icon_square.png -resize 128x128 PNG32:128x128.png
+          convert icon_square.png -resize 256x256 PNG32:128x128@2x.png
           cp icon_square.png icon.png
           ls -la
 
@@ -99,13 +99,13 @@ jobs:
           choco install imagemagick -y
           refreshenv
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          # Create a square icon by centering the original on a 256x256 canvas
-          magick icon.png -background transparent -gravity center -extent 256x256 icon_square.png
-          # Generate required PNG sizes
-          magick icon_square.png -resize 32x32 32x32.png
-          magick icon_square.png -resize 128x128 128x128.png
-          magick icon_square.png -resize 256x256 "128x128@2x.png"
-          Copy-Item icon_square.png icon.png
+          # Create a square icon by centering the original on a 256x256 canvas (force RGBA)
+          magick icon.png -background none -gravity center -extent 256x256 PNG32:icon_square.png
+          # Generate required PNG sizes (force RGBA with PNG32 prefix)
+          magick icon_square.png -resize 32x32 PNG32:32x32.png
+          magick icon_square.png -resize 128x128 PNG32:128x128.png
+          magick icon_square.png -resize 256x256 PNG32:"128x128@2x.png"
+          Copy-Item icon_square.png icon.png -Force
           # Generate ICO file
           magick icon_square.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
           if (!(Test-Path icon.ico)) {
