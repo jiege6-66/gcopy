@@ -64,7 +64,21 @@ jobs:
             libayatana-appindicator3-dev \
             librsvg2-dev \
             patchelf \
-            libgtk-3-dev
+            libgtk-3-dev \
+            imagemagick
+
+      - name: Generate icons (Ubuntu)
+        if: matrix.platform == 'ubuntu-22.04'
+        working-directory: desktop/src-tauri/icons
+        run: |
+          # Create a square icon by centering the original on a 256x256 canvas
+          convert icon.png -background transparent -gravity center -extent 256x256 icon_square.png
+          # Generate required sizes
+          convert icon_square.png -resize 32x32 32x32.png
+          convert icon_square.png -resize 128x128 128x128.png
+          convert icon_square.png -resize 256x256 128x128@2x.png
+          cp icon_square.png icon.png
+          ls -la
 
       - name: Install frontend dependencies
         working-directory: desktop
@@ -79,17 +93,26 @@ jobs:
 
       - name: Generate icons (Windows)
         if: matrix.platform == 'windows-latest'
-        working-directory: desktop
+        working-directory: desktop/src-tauri/icons
         shell: pwsh
         run: |
           choco install imagemagick -y
           refreshenv
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
-          magick src-tauri/icons/icon.png -define icon:auto-resize=256,128,64,48,32,16 src-tauri/icons/icon.ico
-          if (!(Test-Path src-tauri/icons/icon.ico)) {
+          # Create a square icon by centering the original on a 256x256 canvas
+          magick icon.png -background transparent -gravity center -extent 256x256 icon_square.png
+          # Generate required PNG sizes
+          magick icon_square.png -resize 32x32 32x32.png
+          magick icon_square.png -resize 128x128 128x128.png
+          magick icon_square.png -resize 256x256 "128x128@2x.png"
+          Copy-Item icon_square.png icon.png
+          # Generate ICO file
+          magick icon_square.png -define icon:auto-resize=256,128,64,48,32,16 icon.ico
+          if (!(Test-Path icon.ico)) {
             Write-Error "Failed to generate icon.ico"
             exit 1
           }
+          Get-ChildItem
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
