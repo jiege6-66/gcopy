@@ -83,7 +83,13 @@ jobs:
         shell: pwsh
         run: |
           choco install imagemagick -y
+          refreshenv
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
           magick src-tauri/icons/icon.png -define icon:auto-resize=256,128,64,48,32,16 src-tauri/icons/icon.ico
+          if (!(Test-Path src-tauri/icons/icon.ico)) {
+            Write-Error "Failed to generate icon.ico"
+            exit 1
+          }
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
@@ -140,7 +146,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
+          draft: false
           files: |
             artifacts/**/*.dmg
             artifacts/**/*.deb
